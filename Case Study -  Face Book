@@ -1,0 +1,91 @@
+ How Facebook uses Data Science – Essential Ways & Real-life Examples
+
+What can data do?
+
+Data can’t do anything. It’s the people who do things with data (they make decisions).
+
+
+Have you ever seen videos on Facebook that shows a “flashback” of posts, or images – like those you see on your birthday,
+or on completing a few years of becoming friends with someone? If the answer is yes, you have seen examples of how Facebook 
+uses Data Science
+
+The average number of hours spent on Facebook by an American is 2 hours. That is 2 hours worth of clicks, likes, comments,
+and shares that goes into huge databases to be extracted for further analysis. This is usually done to better understand behaviors
+and improve the user experience, to create marketing profiles, and a lot more
+
+
+How Data Science benefits Facebook
+Facebook uses data science in the following 3 ways:
+
+1. Textual Analysis
+A large portion of data that is shared on Facebook is text. Facebook uses a tool it developed on its own called DeepText to
+extract meaning from words we write or post by learning to analyze them
+
+
+2. Facial Recognition
+One of Facebook’s most recent investments has been in facial recognition and image processing capabilities.
+Facebook can track its users across the internet and other Facebook profiles with image data provided through users by sharing 
+in their profiles. It uses an application called DeepFace to teach itself to recognize photos of people.
+It says that this is the most advanced face recognition tool which is more successful than humans in recognizing two different 
+images of the same person.
+
+
+3. Targeted Advertising
+Facebook uses data science to decide which advertisements to show to which users. 
+Do you ever see sponsored ads on your feed while using Facebook? That’s targeted advertising and I know for sure this happens to you! 
+If you don’t believe us, try searching the internet for something you have never searched for before. Then, 
+log into Facebook and look at the advertisements that pop up for you. Are they similar to what you searched for?
+The answer is probably yes.
+
+Here are some real-life examples that show how Facebook uses data science:
+
+1. The Flashback
+
+On celebrating its 10th anniversary, Facebook offered its users to view and share their anniversary of being friends with people
+on Facebook by making a video of photos and posts shared by them. These were the photos and posts that received the most number 
+of likes and comments on the feed.
+
+2. Celebrate Pride
+
+In order to celebrate pride, Facebook introduced rainbow reaction, a way to support the Supreme Court’s judgment for marriage equality.
+It provided an easy, simple way to transform profile pictures into rainbow-colored ones.
+3 million people on Facebook updated their profile pictures to the logo of the Human Rights Campaign.
+Are you amazed to look at how cleverly Facebook uses data science as its weapon to effectively use its data and provide
+a better experience to its users?
+
+
+Now you might think, what kind of information of its users is collected by Facebook?
+
+1. Things you do and the information you provide:
+
+It collects and stores your content and other information that you provide. For example – your personal details when you sign up,
+relatives, relationship status, phone number, likes and dislikes, etc.
+
+2. Things others do and the information they provide to Facebook:
+
+It collects information that other people such as your friends and family members provide about you, 
+like when they share a photo of you, with you or send a message to you
+
+3. Your connections and networks on Facebook:
+
+It collects information about the people and groups you are connected to and how often do you interact with them, 
+such as the people you communicate with the most or the groups you like to share with.
+
+4. Financial information when you purchase on Facebook:
+
+If you use Facebook for any kind of financial transactions like, when you buy something on Facebook, make a purchase in a game,
+it collects information about that purchase or transaction.
+This can be related to information about your credit card or debit card number, contact details, etc.
+
+5. Information about how you access Facebook:
+
+It collects information about the computers, phones, or other devices where you install or access its services such as device locations,
+the name of your mobile operator or ISP, browser type, mobile phone number, IP address, etc.
+
+This is all possible because of data science and machine learning. These technologies play a big role in contributing to
+the success of companies and helping them to provide unbelievable features to their users.
+
+
+
+
+
