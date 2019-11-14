@@ -1,0 +1,324 @@
+
+
+
+CAPSTONE PROJECT  - TO RELOCATE IN USA
+Battle of the Neighborhoods
+Section Alpha: Introduction
+Description of Problem:
+
+A couple has decided to relocate within the United States. They have created a list of requirements. This list includes a population range of under 75,000 and a few community amenities, such as a grocery store, a library, a post office, a gym or outdoor recreation, and restaurants. I am tasked with determining the cities and towns which fall within this desirable range.
+
+In [1]:
+# import libraries
+import numpy as np # for vectorized data
+import pandas as pd # for data analsysis
+pd.set_option('display.max_columns', None)
+pd.set_option('display.max_rows', None)
+
+import json # for JSON files
+import requests # for requests
+from pandas.io.json import json_normalize # to tranform JSON file into a pandas dataframe
+
+#!conda install -c conda-forge geopy --yes # uncomment this line if you haven't completed the Foursquare API lab
+#from geopy.geocoders import Nominatim # to convert an address into latitude and longitude values
+
+!conda install -c conda-forge folium=0.5.0 --yes # uncomment this line if you haven't completed the Foursquare API lab
+import folium # for map rendering
+from folium import plugins
+
+print('LIBRARIES IMPORTED.')
+Solving environment: done
+
+## Package Plan ##
+
+  environment location: /opt/conda/envs/Python36
+
+  added / updated specs: 
+    - folium=0.5.0
+
+
+The following packages will be downloaded:
+
+    package                    |            build
+    ---------------------------|-----------------
+    openssl-1.1.1c             |       h516909a_0         2.1 MB  conda-forge
+    ca-certificates-2019.9.11  |       hecc5488_0         144 KB  conda-forge
+    branca-0.3.1               |             py_0          25 KB  conda-forge
+    vincent-0.4.4              |             py_1          28 KB  conda-forge
+    folium-0.5.0               |             py_0          45 KB  conda-forge
+    certifi-2019.9.11          |           py36_0         147 KB  conda-forge
+    altair-3.2.0               |           py36_0         770 KB  conda-forge
+    ------------------------------------------------------------
+                                           Total:         3.3 MB
+
+The following NEW packages will be INSTALLED:
+
+    altair:          3.2.0-py36_0      conda-forge
+    branca:          0.3.1-py_0        conda-forge
+    folium:          0.5.0-py_0        conda-forge
+    vincent:         0.4.4-py_1        conda-forge
+
+The following packages will be UPDATED:
+
+    ca-certificates: 2019.8.28-0                   --> 2019.9.11-hecc5488_0 conda-forge
+    certifi:         2019.9.11-py36_0              --> 2019.9.11-py36_0     conda-forge
+
+The following packages will be DOWNGRADED:
+
+    openssl:         1.1.1d-h7b6447c_2             --> 1.1.1c-h516909a_0    conda-forge
+
+
+Downloading and Extracting Packages
+openssl-1.1.1c       | 2.1 MB    | ##################################### | 100% 
+ca-certificates-2019 | 144 KB    | ##################################### | 100% 
+branca-0.3.1         | 25 KB     | ##################################### | 100% 
+vincent-0.4.4        | 28 KB     | ##################################### | 100% 
+folium-0.5.0         | 45 KB     | ##################################### | 100% 
+certifi-2019.9.11    | 147 KB    | ##################################### | 100% 
+altair-3.2.0         | 770 KB    | ##################################### | 100% 
+Preparing transaction: done
+Verifying transaction: done
+Executing transaction: done
+LIBRARIES IMPORTED.
+Section Beta: Data
+Data will be acquired from the U.S. Census Bureau to identify communities within the desired population range. These metropolitan and micropolitan areas will then be passed through the Google Maps API in order to geocode each location by latitude and longitude. Along the way, any missing data will be removed. These coordinates will then be used in the Foursquare API, along with the venue categories selected by the couple, in order to acquire information regarding community amenities for each location. Lastly, these will be mapped to aid in visualization.
+
+This product uses the Census Bureau Data API but is not endorsed or certified by the Census Bureau.
+
+In [2]:
+#Census Bureau API Key and Call
+CensusBureau_Key = ''
+CensusBureau_url='https://api.census.gov/data/2018/pep/population?get=GEONAME,POP&for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:*&key={}'.format(CensusBureau_Key)
+#create dataframe
+df = pd.read_json(CensusBureau_url)
+df.head()
+Out[2]:
+0	1	2
+0	GEONAME	POP	metropolitan statistical area/micropolitan sta...
+1	Aberdeen, SD Micro Area	43191	10100
+2	Aberdeen, WA Micro Area	73901	10140
+3	Abilene, TX Metro Area	171451	10180
+4	Ada, OK Micro Area	38247	10220
+In [3]:
+df = df.drop(columns =[2])
+df.columns = ["City","Population"]
+df = df.drop(0)
+df.head()
+Out[3]:
+City	Population
+1	Aberdeen, SD Micro Area	43191
+2	Aberdeen, WA Micro Area	73901
+3	Abilene, TX Metro Area	171451
+4	Ada, OK Micro Area	38247
+5	Adjuntas, PR Micro Area	17302
+In [4]:
+df.dtypes
+Out[4]:
+City          object
+Population    object
+dtype: object
+In [5]:
+df['Population']=df['Population'].astype(str).astype(int)
+df['City']=df['City'].astype(str)
+df.dtypes
+Out[5]:
+City          object
+Population     int64
+dtype: object
+In [6]:
+df=df[df['Population']<=75000]
+df['City']=df['City'].str.rstrip(' Area')
+df['City']=df['City'].str.rstrip(' Micro')
+df['City']=df['City'].str.rstrip(' Metro')
+df.reset_index(drop=True)
+print(df.shape)
+df.head()
+(475, 2)
+Out[6]:
+City	Population
+1	Aberdeen, SD	43191
+2	Aberdeen, WA	73901
+4	Ada, OK	38247
+5	Adjuntas, PR	17302
+9	Alamogordo, N	66781
+In [7]:
+GoogleMaps_Key = '' # Google Maps API Key 
+#create Google Maps API request url and append to dataframe
+lats=[] #create empty latitude list
+lngs=[] #create empty longitude list
+for i in df['City']:
+    try:
+        GoogleMaps_url='https://maps.googleapis.com/maps/api/geocode/json?key={}&address={}'.format(GoogleMaps_Key,i)
+        response=requests.get(GoogleMaps_url).json()
+        coordinates=response['results'][0]['geometry']['location']
+        lats.append(coordinates['lat'])
+        lngs.append(coordinates['lng'])
+    except:
+        pass
+df2=pd.DataFrame()
+df2['Latitude']=lats
+df2['Longitude']=lngs
+df2.reset_index(drop=True)
+print(df2.shape)
+df2.head()
+(474, 2)
+Out[7]:
+Latitude	Longitude
+0	45.464698	-98.486483
+1	46.975371	-123.815722
+2	34.774531	-96.678345
+3	18.163485	-66.723158
+4	32.899532	-105.960265
+In [8]:
+df.to_csv(r'F:\dataframe.csv')
+df2.to_csv(r'F:\dataframe2.csv')
+In [9]:
+df_full=pd.concat([df, df2], axis = 1)
+df_full.head()
+Out[9]:
+City	Population	Latitude	Longitude
+0	NaN	NaN	45.464698	-98.486483
+1	Aberdeen, SD	43191.0	46.975371	-123.815722
+2	Aberdeen, WA	73901.0	34.774531	-96.678345
+3	NaN	NaN	18.163485	-66.723158
+4	Ada, OK	38247.0	32.899532	-105.960265
+In [10]:
+df_full.dropna(how='any', inplace=True)
+df_full.reset_index(drop=True)
+print(df_full.shape)
+df_full.head()
+(242, 4)
+Out[10]:
+City	Population	Latitude	Longitude
+1	Aberdeen, SD	43191.0	46.975371	-123.815722
+2	Aberdeen, WA	73901.0	34.774531	-96.678345
+4	Ada, OK	38247.0	32.899532	-105.960265
+5	Adjuntas, PR	17302.0	35.350143	-80.200058
+9	Alamogordo, N	66781.0	27.752249	-98.069725
+In [11]:
+#create category list
+#Grocery Store 4bf58dd8d48988d118951735
+#Food 4d4b7105d754a06374d81259
+#Library 4bf58dd8d48988d12f941735
+#Outdoors & Recreations 4d4b7105d754a06377d81259
+#Post Office 4bf58dd8d48988d172941735
+
+CategoryIds=['4bf58dd8d48988d118951735','4d4b7105d754a06374d81259','4bf58dd8d48988d12f941735','4d4b7105d754a06377d81259','4bf58dd8d48988d172941735']
+categoryId=','.join(CategoryIds)
+print(categoryId)
+4bf58dd8d48988d118951735,4d4b7105d754a06374d81259,4bf58dd8d48988d12f941735,4d4b7105d754a06377d81259,4bf58dd8d48988d172941735
+In [12]:
+client_id = '' # Foursquare API ID
+client_secret = '' # Foursquare API Secret
+version = '20190810' # Foursquare API version YYYYMMDD
+radius = 50 # define radius
+limit = 100 # limit the number of venues returned by Foursquare API
+# create URL and call
+
+venues_list=[]
+for lat, lon, in zip(df_full['Latitude'],df_full['Longitude']):
+    FourSquare_url = 'https://api.foursquare.com/v2/venues/explore?&client_id={}&client_secret={}&v={}&ll={},{}&radius={}&categoryId={}&limit={}'.format(
+        client_id,
+        client_secret, 
+        version, 
+        lat,
+        lon,
+        radius, 
+        categoryId,
+        limit)
+        
+    results2=requests.get(FourSquare_url).json()['response']['groups'][0]['items']
+    
+    for item in results2:
+        venue_name=item['venue']['name']
+        venue_category=item['venue']['categories'][0]['name']
+        try:
+            venue_city=item['venue']['location']['city']
+        except:
+            venue_city='N/A'
+        venue_state=item['venue']['location']['state']
+        
+        venues_list.append([(
+                venue_city,
+                venue_state,
+                lat,
+                lon,
+                venue_name,
+                venue_category)])
+            
+
+venues_df=pd.DataFrame([item for venue_list in venues_list for item in venue_list])
+venues_df.columns=["City","State","Latitude","Longitude","Venue","Category"]
+print(venues_df.shape)
+venues_df.head()
+(226, 6)
+Out[12]:
+City	State	Latitude	Longitude	Venue	Category
+0	Ada	OK	34.774531	-96.678345	House of Health	Food
+1	Alamogordo	NM	32.899532	-105.960265	Roswell Baking Co	Bakery
+2	Americus	GA	32.072386	-84.232688	Terri's Market and Eatery	Food
+3	Americus	GA	32.072386	-84.232688	J J's Wings & Things	Burger Joint
+4	Amsterdam	NY	42.937745	-74.190356	Riverside Pizza	Pizza Place
+In [13]:
+venues_df.to_csv(r'F:\dataframevenues.csv')
+Section Gamma: Methodology
+Data from the U.S. Census Bureau was initially loaded using Census Bureau Data API. This data included all metropolitan and micropolitan areas and their population information from 2018. This data was cleaned then reduced to areas with a population less than or equal to 75,000. The metropolitan and micropolitan areas, or cities, were passed through the Google Maps API in order to acquire latitude and longitude for each city. Once this was done, the latitude and longitude coordinates were passed through the Foursquare API along with the categories IDs identified by the couple as significant.
+
+In [14]:
+venues_df.groupby('City')['City'].count().sort_values(ascending=False)
+print(venues_df.shape)
+venues_df.head()
+(226, 6)
+Out[14]:
+City	State	Latitude	Longitude	Venue	Category
+0	Ada	OK	34.774531	-96.678345	House of Health	Food
+1	Alamogordo	NM	32.899532	-105.960265	Roswell Baking Co	Bakery
+2	Americus	GA	32.072386	-84.232688	Terri's Market and Eatery	Food
+3	Americus	GA	32.072386	-84.232688	J J's Wings & Things	Burger Joint
+4	Amsterdam	NY	42.937745	-74.190356	Riverside Pizza	Pizza Place
+Section Delta: Results
+The resulting data shows 226 locations which are home to one or more amenities requested by the couple, and thus, are locations of interest to the couple. These locations have been organized to show the cities with the most amenities first. The top twenty-five locations are mapped below.
+
+In [15]:
+venues_df_top=venues_df.iloc[0:25]
+In [16]:
+map = folium.Map(location=[39.8, -98.6], zoom_start=10)
+venues_df_top.apply(lambda row:folium.Marker(location=[row["Latitude"], 
+                                                  row["Longitude"]]).add_to(map),
+     axis=1)
+map
+Out[16]:
+Section Epsilon: Disscussion
+The data has been organized to include cities and towns with a population range of under 75,000 and with the amenities, of a grocery store, a library, a post office, a gym or outdoor recreation, and restaurants. The top twenty-five cities and towns which fall within this desirable range are shown below.
+
+In [17]:
+venues_df.head(25)
+Out[17]:
+City	State	Latitude	Longitude	Venue	Category
+0	Ada	OK	34.774531	-96.678345	House of Health	Food
+1	Alamogordo	NM	32.899532	-105.960265	Roswell Baking Co	Bakery
+2	Americus	GA	32.072386	-84.232688	Terri's Market and Eatery	Food
+3	Americus	GA	32.072386	-84.232688	J J's Wings & Things	Burger Joint
+4	Amsterdam	NY	42.937745	-74.190356	Riverside Pizza	Pizza Place
+5	Astoria	OR	46.187884	-123.831253	Midpoint	BBQ Joint
+6	Astoria	OR	46.187884	-123.831253	Yufka	Burrito Place
+7	Astoria	OR	46.187884	-123.831253	Warteg Niki II	Indonesian Restaurant
+8	Athens	TN	35.442851	-84.592990	Dairy Barn	Ice Cream Shop
+9	Auburn	IN	41.366994	-85.058858	Spencerville Easter Star Donut Stand	Donut Shop
+10	Decatur County	GA	30.903800	-84.575470	Makan	Asian Restaurant
+11	Bainbridge	GA	30.903800	-84.575470	Yuki Express Japanese Restaurant	Japanese Restaurant
+12	Decatur County	GA	30.903800	-84.575470	Southern Sweets Bakery	Bakery
+13	Decatur County	GA	30.903800	-84.575470	Perhaps A Wrap?	Food Truck
+14	Bardstown	KY	37.809228	-85.466902	Harrison-Smith House	Comfort Food Restaurant
+15	Barre	VT	44.197006	-72.502049	Green Mountain Mini Baked	Donut Shop
+16	Batesville	AR	35.769799	-91.640972	Subway	Sandwich Place
+17	Batesville	AR	35.769799	-91.640972	Subway	Sandwich Place
+18	Batesville	AR	35.769799	-91.640972	Fat Jax Catering and Carry Out	Food
+19	Batesville	AR	35.769799	-91.640972	Morningside Coffee House	Food
+20	Batesville	AR	35.769799	-91.640972	Sabor Latino	Food Truck
+21	Bay City	TX	28.982757	-95.969402	Marias Mexican Restaraunt	Mexican Restaurant
+22	Bedford	IN	38.861162	-86.487215	Country Barn Cafe (early bird)	American Restaurant
+23	Bedford	IN	38.861162	-86.487215	El Nacho Del Burrito Mexican Grill	Burrito Place
+24	Bedford	IN	38.861162	-86.487215	Long John Silver's	Seafood Restaurant
+Section Zeta: Conclusion
+In conclusion, the couple has several options for relocaion. They should be able to find a new place to live. I wish them the best.
